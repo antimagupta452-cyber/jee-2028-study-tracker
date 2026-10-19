@@ -183,13 +183,23 @@ function clean(o){
   Object.keys(o.reviews).forEach(k=>{const r=o.reviews[k];if(validDate(k)&&r&&typeof r==='object'){s.reviews[k]={};RV.forEach(([f])=>{s.reviews[k][f]=str(r[f],2000)})}});
   return s;
 }
-function load(){
-  try{const r=localStorage.getItem(KEY);if(r){const c=clean(JSON.parse(r));if(c)S=c;else toast('Saved data was invalid and was ignored.','err')}}
-  catch(e){toast('Could not read saved data. Changes may not persist in this browser.','err')}
+let pending=null;
+async function putData(){
+  try{const r=await fetch('/api/data',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(S)});if(!r.ok)throw 0}
+  catch(e){toast('Could not save to the server. Export a backup.','err')}
 }
-function save(){
-  try{localStorage.setItem(KEY,JSON.stringify(S))}
-  catch(e){toast('Could not save: browser storage is full or blocked. Export a backup.','err')}
+function save(){clearTimeout(pending);pending=setTimeout(putData,400)}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'&&pending){clearTimeout(pending);pending=null;putData()}});
+async function load(){
+  try{
+    const r=await fetch('/api/data');if(!r.ok)throw 0;
+    const j=await r.json();
+    if(j&&j.data){const c=clean(j.data);if(c)S=c;else toast('Stored data was invalid and was ignored.','err')}
+    else{
+      try{const r2=localStorage.getItem(KEY);if(r2){const c=clean(JSON.parse(r2));if(c){S=c;putData()}}localStorage.removeItem(KEY)}catch(e){}
+    }
+  }catch(e){toast('Could not load saved data from the server.','err')}
+  render();
 }
 
 /* ---------- views ---------- */
@@ -280,7 +290,7 @@ function vChap(){
 
 function vData(){
   return `<div class="card"><h2>Backup and export</h2><div class="acts"><button class="btn p" data-a="expj">Export JSON backup</button><button class="btn" data-a="expc">Export study log (CSV)</button></div><label class="mt">Import JSON backup<input type="file" accept="application/json,.json" data-c="imp"></label></div>
-  <div class="card"><h2>Stored data</h2><small>${S.sessions.length} sessions · ${S.blocks.length} timetable blocks · ${S.chapters.length} chapters · ${Object.keys(S.reviews).length} weekly reviews</small><p>Your data is saved in this browser's localStorage. It stays on this device and browser, is not synced between devices, and is lost if you clear site data. Export a backup regularly, and import it to move to another device.</p></div>
+  <div class="card"><h2>Stored data</h2><small>${S.sessions.length} sessions · ${S.blocks.length} timetable blocks · ${S.chapters.length} chapters · ${Object.keys(S.reviews).length} weekly reviews</small><p>Your data is saved on the app's server, not in this browser. It is the same on every device and browser you open the app from, and survives clearing site data. Export a backup regularly, and import it to restore or move data.</p></div>
   <div class="card"><h2>Reset</h2><small>Deletes all sessions, chapters and reviews and restores the default timetable.</small><button class="btn d mt" data-a="reset">Delete all data</button></div>`;
 }
 /* ---------- demo walkthrough (sample data only, never saved) ---------- */
@@ -292,7 +302,7 @@ const DEMO=[
 {t:'Complete it and watch progress',d:8000,x:'Tap Complete when you finish. Your stats, accuracy and target bar update by themselves.',h:`<div class="card"><div class="row"><div><b>Rotational Motion</b><small>Physics · Actual 1h 15m of 1h 30m · 16/20 correct</small></div><span class="tag" data-s='[[2200,"type","Completed"]]'>In Progress</span></div><button class="btn s" tabindex="-1" data-s='[[1200,"tap"]]'>Complete</button></div><div class="card"><div class="grid"><div class="stat"><small>Focused study</small><b data-s='[[2200,"type","1h 15m"]]'>0m</b></div><div class="stat"><small>Tasks completed</small><b data-s='[[2300,"type","1 / 1"]]'>0 / 1</b></div><div class="stat"><small>Questions correct</small><b data-s='[[2400,"type","16 / 20"]]'>0 / 0</b></div><div class="stat"><small>Accuracy</small><b data-s='[[2500,"type","80%"]]'>n/a</b></div></div><div class="bar"><i style="width:0" data-s='[[2200,"w","12%"]]'></i></div><small class="mt">Still to go today: 8h 45m of focused study.</small></div>`},
 {t:'Track your chapters',d:9000,x:'Add a chapter, then change its status as you learn. Mastery is your own call. The app never decides it.',h:`<div class="card"><div class="acts"><div class="fi" style="flex:1;margin:0" data-s='[[300,"tap"],[500,"type","Rotational Motion"]]'></div><button class="btn p s" tabindex="-1" data-s='[[1900,"tap"]]'>Add</button></div></div><div class="card fx" data-s='[[2400,"show"]]'><b>Rotational Motion</b><small class="mt">Status</small><div class="fi" data-s='[[3000,"tap"],[3300,"type","Learning"],[4800,"tap"],[5100,"type","Practicing"],[6600,"tap"],[6900,"type","Mastered"]]'>Not Started</div><small class="mt">Lecture progress</small><div class="bar"><i style="width:0" data-s='[[3300,"w","40%"],[5100,"w","80%"],[6900,"w","100%"]]'></i></div></div>`},
 {t:'Review your week',d:8000,x:'Weekly shows your hours, accuracy and subject time. Write what to fix next week.',h:`<div class="card"><h2>Weekly study hours</h2><div class="chart">${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map((d,i)=>`<div class="col"><div class="cb"><i style="height:0" data-s='[[${600+i*250},"h","${[50,70,40,85,60,90,30][i]}%"]]'></i></div><small>${d}</small></div>`).join('')}</div></div><div class="card"><small>Biggest bottleneck</small><div class="fi" data-s='[[3200,"tap"],[3600,"type","Too many silly mistakes in Maths"]]'></div></div><div class="card fx" data-s='[[5800,"show"]]'><small>Your reflection is saved automatically. Next week, fix the bottleneck first.</small></div>`},
-{t:'Back up your data',d:6000,x:'Your data is saved only on this phone. Export a backup every week.',h:`<div class="card"><h2>Backup and export</h2><div class="acts"><button class="btn p" tabindex="-1" data-s='[[1000,"tap"]]'>Export JSON backup</button><button class="btn" tabindex="-1">Export study log (CSV)</button></div></div><div class="card"><small>Your data lives only in this browser on this device. It does not sync to other devices. Keep the backup file safe.</small></div><div class="toast2 fx" data-s='[[1800,"show"]]'>Backup exported.</div>`},
+{t:'Back up your data',d:6000,x:'Your data is saved on the server. Export a backup every week.',h:`<div class="card"><h2>Backup and export</h2><div class="acts"><button class="btn p" tabindex="-1" data-s='[[1000,"tap"]]'>Export JSON backup</button><button class="btn" tabindex="-1">Export study log (CSV)</button></div></div><div class="card"><small>Your data is stored on the app's server and is the same on all your devices. Keep the backup file safe.</small></div><div class="toast2 fx" data-s='[[1800,"show"]]'>Backup exported.</div>`},
 {t:'You are ready',d:5000,x:'Close the demo and log your first session. You can replay this demo any time from Help.',h:`<div class="card" style="text-align:center;margin-top:80px"><h2>You are ready 🎯</h2><p>Study. Log. Review. Repeat.</p><small>Tap the blue + button to begin.</small></div>`}
 ];
 let dI=0,dPlay=true,dT=[];
@@ -544,7 +554,6 @@ document.addEventListener('submit',e=>{
 });
 
 load();
-render();
 </script>
 </body>
 </html>
