@@ -192,6 +192,15 @@ function save(){
   catch(e){toast('Could not save: browser storage is full or blocked. Export a backup.','err')}
 }
 
+/* ---------- subject timer ---------- */
+const TKEY='jee2028-study-os-timer-v1';
+let T=(()=>{try{const r=JSON.parse(localStorage.getItem(TKEY));if(r&&SUBJ.includes(r.sub)&&Number.isFinite(r.acc)&&r.acc>=0){const t={sub:r.sub,run:!!r.run,acc:r.acc,st:Number.isFinite(r.st)?r.st:0};if(t.run&&!t.st)t.run=false;return t}}catch(e){}return{sub:'Physics',run:false,acc:0,st:0}})();
+let tIv=null;
+const tSave=()=>{try{localStorage.setItem(TKEY,JSON.stringify({sub:T.sub,run:T.run,acc:T.acc,st:T.st}))}catch(e){}};
+const tElapsed=()=>Math.floor((T.acc+(T.run?Date.now()-T.st:0))/1000);
+const fmtHMS=s=>pad(Math.floor(s/3600))+':'+pad(Math.floor(s%3600/60))+':'+pad(s%60);
+const tTick=()=>{const e=$('#tClock');if(e)e.textContent=fmtHMS(tElapsed())};
+
 /* ---------- views ---------- */
 const daySess=d=>S.sessions.filter(s=>s.date===d);
 const wkSess=w=>S.sessions.filter(s=>s.date>=w&&s.date<=addDays(w,6));
@@ -202,6 +211,16 @@ function sRow(s,showDate){
   return `<div class="row" style="border-left:3px solid ${SC[s.subject]||"#5b7cff"};padding-left:10px"><div class="grow"><b>${esc(s.topic||s.task)}</b>${s.topic&&s.task?`<div>${esc(s.task)}</div>`:''}<small>${showDate?esc(s.date)+' · ':''}${esc(s.subject)}${s.block?' · '+esc(s.block):''}${s.start?' · '+s.start+'–'+s.end:''}</small><small>Actual ${fm(s.actual)} of ${fm(s.planned)} planned${s.att?' · '+s.cor+'/'+s.att+' correct':''}</small>${s.notes?`<small class="note">${esc(s.notes)}</small>`:''}</div><div class="acts"><span class="tag ${done?'ok':''}">${esc(s.status)}</span><button class="btn s" data-a="tog" data-id="${id}">${done?'Reopen':'Complete'}</button><button class="btn s" data-a="edit" data-id="${id}">Edit</button><button class="btn s d" data-a="del" data-id="${id}">Delete</button></div></div>`;
 }
 
+function timerCard(){
+  const today=daySess(date);
+  const per=SUBJ.map(s=>({s,m:sum(today.filter(x=>x.subject===s),'actual')}));
+  const mx=Math.max(...per.map(x=>x.m),1);
+  return `<div class="card"><h2>Subject timer</h2><small>Start the timer for one subject, then stop it to log the minutes as a session for ${esc(date)}. The bars show today's logged time per subject.</small>
+  <div class="two mt"><label>Subject<select data-c="tsub">${SUBJ.map(x=>`<option${x===T.sub?' selected':''}>${x}</option>`).join('')}</select></label><div class="stat"><small>Elapsed</small><b id="tClock">${fmtHMS(tElapsed())}</b><small>${esc(T.sub)}</small></div></div>
+  <div class="acts"><button class="btn ${T.run?'':'p'}" data-a="tstart">${T.run?'Pause':'Start'}</button><button class="btn" data-a="tstop">Stop &amp; log</button></div>
+  <div class="mt">${per.map(x=>`<div><small>${esc(x.s)}: ${fm(x.m)}</small><div class="bar"><i style="width:${pct(x.m,mx)}%;background:${SC[x.s]}"></i></div></div>`).join('')}</div></div>`;
+}
+
 function vDash(){
   const a=daySess(date),t=agg(a),tg=S.settings.target*60,p=pct(t.act,tg);
   const w=wkStart(date),days=[0,1,2,3,4,5,6].map(i=>{const d=addDays(w,i);return{d,m:sum(daySess(d),'actual')}});
@@ -209,7 +228,7 @@ function vDash(){
   const pend=a.filter(s=>s.status!=='Completed').sort(byTime),done=a.filter(s=>s.status==='Completed').sort(byTime);
   const blocks=[...S.blocks].sort((x,y)=>x.start.localeCompare(y.start));
   return hero(p)+guide()+`<div class="card"><div class="two"><label>Date<input type="date" value="${date}" data-c="date" required></label><label>Daily focused target (hours)<input type="number" min="0.5" max="24" step="0.5" value="${S.settings.target}" data-c="target"></label></div><div class="acts"><button class="btn" data-a="today">Today</button><button class="btn p" data-a="new">+ Add study session</button></div></div>
-  <div class="card"><div class="grid">${stat('Focused study',fm(t.act),'target '+fm(tg))}${stat('Target completed',p+'%')}${stat('Tasks completed',t.done+' / '+t.n)}${stat('Questions correct',t.cor+' / '+t.att,'attempted '+t.att)}${stat('Accuracy',acc(t))}${stat('Planned today',fm(t.pl))}</div>${bar(p,p>=100?'ok':'')}<small class="mt">${p>=100?'Target reached. Great work!':'Still to go today: '+fm(tg-t.act)+' of focused study.'}</small></div>${exam()}
+  <div class="card"><div class="grid">${stat('Focused study',fm(t.act),'target '+fm(tg))}${stat('Target completed',p+'%')}${stat('Tasks completed',t.done+' / '+t.n)}${stat('Questions correct',t.cor+' / '+t.att,'attempted '+t.att)}${stat('Accuracy',acc(t))}${stat('Planned today',fm(t.pl))}</div>${bar(p,p>=100?'ok':'')}<small class="mt">${p>=100?'Target reached. Great work!':'Still to go today: '+fm(tg-t.act)+' of focused study.'}</small></div>${timerCard()}${exam()}
   <div class="card"><h2>Weekly study hours: ${fm(wt)}</h2><small class="mt">Week of ${w}. Green = target met.</small><div class="chart mt">${days.map(x=>`<div class="col ${x.d===date?'sel':''}"><div class="cb"><i class="${x.m>=tg?'ok':''}" style="height:${pct(x.m,mx)}%"></i></div><small>${dow(x.d)}</small><small>${fm(x.m)}</small></div>`).join('')}</div></div>
   <div class="card"><h2>Today's study schedule</h2>${blocks.length?blocks.map(b=>`<div class="row ${b.study?'':'dim'}"><div>${b.start}–${b.end} · ${esc(b.title)}</div><span class="tag">${b.study?'Study block':'Not study'}</span></div>`).join(''):empty('No timetable blocks. Add them in Timetable.')}</div>
   <div class="card"><h2>Pending tasks (${pend.length})</h2>${pend.length?pend.map(s=>sRow(s)).join(''):a.length?empty('Nothing pending.'):empty('No sessions on this date yet.')+'<div class="acts" style="justify-content:center"><button class="btn p" data-a="new">+ Add your first session</button></div>'}</div>
@@ -405,6 +424,7 @@ function render(){
   document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.id===tab));
   const tip=INTRO[tab]?`<details class="tip" ${S.settings.hideGuide?'':'open'}><summary>What is this page?</summary><p>${INTRO[tab]}</p></details>`:'';
   $('#view').innerHTML=tip+VIEWS[tab]();clearTimeout(bt);bt=setTimeout(checkBadges,900);
+  clearInterval(tIv);tIv=null;if(tab==='dash'&&T.run)tIv=setInterval(tTick,1000);
 }
 
 /* ---------- dialog forms ---------- */
@@ -483,6 +503,19 @@ function importJson(file){
 const find=(l,id)=>S[l].find(x=>x.id===id);
 const ACT={
   tab:id=>{tab=id;render();scrollTo(0,0)},
+  tstart:()=>{
+    if(T.run){T.acc+=Date.now()-T.st;T.run=false;T.st=0}
+    else{T.st=Date.now();T.run=true}
+    tSave();render();
+  },
+  tstop:()=>{
+    const min=Math.round((T.acc+(T.run?Date.now()-T.st:0))/60000);
+    T={sub:T.sub,run:false,acc:0,st:0};tSave();
+    if(min<1)return toast('Less than a minute on the timer, so nothing was logged.','err');
+    if(min>1440)min=1440;
+    S.sessions.push({id:uid(),date,block:'Subject timer',subject:T.sub,topic:'Timed session',task:'',start:'',end:'',planned:0,actual:min,att:0,cor:0,status:'Completed',notes:'Logged with the subject timer'});
+    save();render();toast('Logged '+fm(min)+' of '+T.sub+'.');
+  },
   today:()=>{date=iso(new Date());render()},
   new:()=>openSession(null),
   edit:id=>find('sessions',id)&&openSession(id),
@@ -514,9 +547,10 @@ const ACT={
   delc:id=>{if(find('chapters',id)&&confirm('Delete this chapter and its progress?')){S.chapters=S.chapters.filter(x=>x.id!==id);save();render();toast('Chapter deleted.')}},
   expj:()=>{dl('jee-study-os-backup-'+iso(new Date())+'.json',JSON.stringify(Object.assign({app:'jee2028-study-os',version:1},S),null,2),'application/json');S.settings.backedUp=true;save();render();toast('Backup exported.')},
   expc:exportCsv,
-  reset:()=>{if(confirm('Delete ALL data and restore the default timetable? This cannot be undone.')&&confirm('Last check: have you exported a backup? Delete everything now?')){S=fresh();save();render();toast('All data deleted.')}}
+  reset:()=>{if(confirm('Delete ALL data and restore the default timetable? This cannot be undone.')&&confirm('Last check: have you exported a backup? Delete everything now?')){S=fresh();save();T={sub:'Physics',run:false,acc:0,st:0};tSave();try{localStorage.removeItem(TKEY)}catch(e){}render();toast('All data deleted.')}}
 };
 const CH={
+  tsub:t=>{T.sub=pick(t.value,SUBJ);tSave();render()},
   date:t=>{if(!validDate(t.value)){toast('Choose a valid date.','err');return render()}date=t.value;render()},
   target:t=>{const n=Number(t.value);if(!(n>=0.5&&n<=24)){toast('Target must be between 0.5 and 24 hours.','err');return render()}S.settings.target=n;save();render()},
   flt:t=>{flt[t.dataset.f]=t.value;render()},
