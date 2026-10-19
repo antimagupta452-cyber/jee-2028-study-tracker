@@ -221,6 +221,7 @@ function vDash(){
   return hero(p)+guide()+`<div class="card"><div class="two"><label>Date<input type="date" value="${date}" data-c="date" required></label><label>Daily focused target (hours)<input type="number" min="0.5" max="24" step="0.5" value="${S.settings.target}" data-c="target"></label></div><div class="acts"><button class="btn" data-a="today">Today</button><button class="btn p" data-a="new">+ Add study session</button></div></div>
   <div class="card"><div class="grid">${stat('Focused study',fm(t.act),'target '+fm(tg))}${stat('Target completed',p+'%')}${stat('Tasks completed',t.done+' / '+t.n)}${stat('Questions correct',t.cor+' / '+t.att,'attempted '+t.att)}${stat('Accuracy',acc(t))}${stat('Planned today',fm(t.pl))}</div>${bar(p,p>=100?'ok':'')}<small class="mt">${p>=100?'Target reached. Great work!':'Still to go today: '+fm(tg-t.act)+' of focused study.'}</small></div>${exam()}
   <div class="card"><h2>Weekly study hours: ${fm(wt)}</h2><small class="mt">Week of ${w}. Green = target met.</small><div class="chart mt">${days.map(x=>`<div class="col ${x.d===date?'sel':''}"><div class="cb"><i class="${x.m>=tg?'ok':''}" style="height:${pct(x.m,mx)}%"></i></div><small>${dow(x.d)}</small><small>${fm(x.m)}</small></div>`).join('')}</div></div>
+  <div class="card"><h2>PW Tracker 360 planner</h2><div class="acts" style="justify-content:space-between"><small>Live from tracker360.pw.live</small><button class="btn s" data-a="pwrefresh">Refresh</button></div><div id="pwBody"><p class="empty">Loading…</p></div></div>
   <div class="card"><h2>Today's study schedule</h2>${blocks.length?blocks.map(b=>`<div class="row ${b.study?'':'dim'}"><div>${b.start}–${b.end} · ${esc(b.title)}</div><span class="tag">${b.study?'Study block':'Not study'}</span></div>`).join(''):empty('No timetable blocks. Add them in Timetable.')}</div>
   <div class="card"><h2>Pending tasks (${pend.length})</h2>${pend.length?pend.map(s=>sRow(s)).join(''):a.length?empty('Nothing pending.'):empty('No sessions on this date yet.')+'<div class="acts" style="justify-content:center"><button class="btn p" data-a="new">+ Add your first session</button></div>'}</div>
   <div class="card"><h2>Completed tasks (${done.length})</h2>${done.length?done.map(s=>sRow(s)).join(''):empty('No completed sessions on this date.')}</div>${badgesCard()}`;
@@ -415,6 +416,28 @@ function render(){
   document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.id===tab));
   const tip=INTRO[tab]?`<details class="tip" ${S.settings.hideGuide?'':'open'}><summary>What is this page?</summary><p>${INTRO[tab]}</p></details>`:'';
   $('#view').innerHTML=tip+VIEWS[tab]();clearTimeout(bt);bt=setTimeout(checkBadges,900);
+  if(tab==='dash')pwLoad();
+}
+
+/* ---------- PW Tracker 360 live planner ---------- */
+let pwData=null,pwT=0;
+function pwPaint(d){
+  const b=$('#pwBody');if(!b)return;
+  if(!d||!d.ok){
+    const m=d&&d.reason==='not_configured'?'Not connected yet. Add your tracker360.pw.live session cookie as the PW_TRACKER_SESSION secret to see your live schedule.':d&&d.reason==='session_expired'?'PW session expired. Sign in again on tracker360.pw.live and update the PW_TRACKER_SESSION secret.':'Could not reach PW Tracker 360. Tap Refresh to try again.';
+    b.innerHTML='<p class="empty">'+m+'</p>';return;
+  }
+  const days=d.days||[];
+  if(!days.length){b.innerHTML='<p class="empty">No scheduled classes right now.</p>';return}
+  b.innerHTML=days.map(x=>`<div class="mt"><small>${esc(x.date||'Planner')}${typeof x.done==='number'?' · '+x.done+' of '+(x.total!=null?x.total:x.lectures.length)+' done':''}</small>${x.lectures.map(l=>`<div class="row"><div class="grow"><b>${esc(l.title)}</b><small>${esc([l.subject,l.chapter,l.duration].filter(Boolean).join(' · '))}</small></div><span class="tag ${l.done?'ok':''}">${l.done?'Done':'Pending'}</span></div>`).join('')}</div>`).join('');
+}
+async function pwLoad(force){
+  const b=$('#pwBody');if(!b)return;
+  const now=Date.now();
+  if(!force&&pwData&&now-pwT<60000)return pwPaint(pwData);
+  b.innerHTML='<p class="empty">Loading…</p>';
+  try{const r=await fetch('/api/pw-planner');pwData=await r.json();pwT=now}catch(e){pwData={ok:false,reason:'fetch_failed'}}
+  pwPaint(pwData);
 }
 
 /* ---------- dialog forms ---------- */
@@ -522,6 +545,7 @@ const ACT={
   wk:id=>{wk=id==='now'?wkStart(iso(new Date())):addDays(wk,7*Number(id));render()},
   chs:id=>{chSub=id;render()},
   delc:id=>{if(find('chapters',id)&&confirm('Delete this chapter and its progress?')){S.chapters=S.chapters.filter(x=>x.id!==id);save();render();toast('Chapter deleted.')}},
+  pwrefresh:()=>pwLoad(true),
   expj:()=>{dl('jee-study-os-backup-'+iso(new Date())+'.json',JSON.stringify(Object.assign({app:'jee2028-study-os',version:1},S),null,2),'application/json');S.settings.backedUp=true;save();render();toast('Backup exported.')},
   expc:exportCsv,
   reset:()=>{if(confirm('Delete ALL data and restore the default timetable? This cannot be undone.')&&confirm('Last check: have you exported a backup? Delete everything now?')){S=fresh();save();render();toast('All data deleted.')}}

@@ -3,13 +3,17 @@
 /* Tiny storage API for JEE 2028 Study OS.
  * GET /api/data -> {"data": <saved state or null>}
  * PUT /api/data (body: JSON state) -> {"ok": true}
- * State is validated by the frontend on load; stored as a single JSON document. */
+ * State is validated by the frontend on load; stored as a single JSON document.
+ * GET /api/pw-planner -> live planner schedule from tracker360.pw.live,
+ *   fetched with the PW_TRACKER_SESSION cookie (secret) if configured. */
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
 const PORT = Number(process.env.PORT) || 8080;
 const DATA_FILE = process.env.DATA_FILE || '/data/state.json';
+const PW_BASE = 'https://tracker360.pw.live';
+const PW_UA = 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36';
 
 fs.mkdirSync(path.dirname(DATA_FILE), { recursive: true });
 
@@ -32,9 +36,81 @@ function send(res, code, body) {
   res.end(JSON.stringify(body));
 }
 
+/* ---------- PW Tracker 360 planner ---------- */
+function pwHeaders(cookie) {
+  return { Cookie: cookie, 'User-Agent': PW_UA, Accept: 'application/json' };
+}
+
+function pwNormalize(j) {
+  const raw = j || {};
+  const days = Array.isArray(raw.days) ? raw.days : Array.isArray(raw) ? raw : [];
+  const out = [];
+  days.slice(0, 14).forEach(day => {
+    if (!day || typeof day !== 'object') return;
+    const groups = Array.isArray(day.groups) ? day.groups : (Array.isArray(day.lectures) ? [{ lectures: day.lectures }] : []);
+    const lectures = [];
+    groups.forEach(g => {
+      const items = (g && (Array.isArray(g.lectures) ? g.lectures : Array.isArray(g.items) ? g.items : [])) || [];
+      items.forEach(l => {
+        if (l && typeof l === 'object') {
+          const title = l.title || l.lecture || l.name;
+          if (typeof title === 'string' && title) {
+            lectures.push({
+              title: String(title).slice(0, 200),
+              subject: String(g.subject || l.subject || l.teacher || '').slice(0, 80),
+              chapter: String(l.chapter || l.chapterName || '').slice(0, 120),
+              duration: String(l.duration || l.durationMin || l.length || '').slice(0, 30),
+              done: !!(l.done || l.isDone || l.watched || l.status === 'Done' || l.status === 'done')
+            });
+          }
+        }
+      });
+    });
+    const label = day.date || day.label || day.day;
+    if (label || lectures.length) {
+      out.push({
+        date: typeof label === 'string' ? label.slice(0, 60) : '',
+        done: typeof day.done === 'number' ? day.done : undefined,
+        total: typeof day.total === 'number' ? day.total : (typeof day.lecture === 'number' ? day.lecture : undefined),
+        lectures
+      });
+    }
+  });
+  return { days: out };
+}
+
+let pwCache = { t: 0, v: null };
+async function pwPlanner() {
+  const cookie = process.env.PW_TRACKER_SESSION || '';
+  if (!cookie) return { ok: false, reason: 'not_configured' };
+  if (pwCache.v && Date.now() - pwCache.t < 60000) return pwCache.v;
+  try {
+    const s = await fetch(PW_BASE + '/api/pw-login/session', { headers: pwHeaders(cookie) });
+    const sj = await s.json().catch(() => ({}));
+    if (!sj || sj.verified !== true) {
+      const v = { ok: false, reason: 'session_expired' };
+      pwCache = { t: Date.now(), v };
+      return v;
+    }
+    const r = await fetch(PW_BASE + '/api/planner/export?from=today', { headers: pwHeaders(cookie) });
+    const j = await r.json().catch(() => null);
+    if (!r.ok || !j || j.error) {
+      return { ok: false, reason: 'fetch_failed', detail: (j && j.error) || ('HTTP ' + r.status) };
+    }
+    const v = Object.assign({ ok: true }, pwNormalize(j));
+    pwCache = { t: Date.now(), v };
+    return v;
+  } catch (e) {
+    return { ok: false, reason: 'fetch_failed', detail: 'network error' };
+  }
+}
+
 const server = http.createServer((req, res) => {
   if (req.method === 'GET' && req.url === '/api/data') {
     return send(res, 200, { data: state });
+  }
+  if (req.method === 'GET' && req.url === '/api/pw-planner') {
+    return pwPlanner().then(v => send(res, 200, v));
   }
   if ((req.method === 'PUT' || req.method === 'POST') && req.url === '/api/data') {
     const chunks = [];
