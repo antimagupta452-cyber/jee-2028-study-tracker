@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0b1020">
+<title>JEE 2028 Study OS</title>
+<style>
+:root{--bg:#0b1020;--card:#131a2e;--c2:#1a2340;--bd:#27315a;--tx:#e6e9f5;--mu:#8e98b8;--ac:#5b7cff;--ok:#3ecf8e;--er:#ff7a7a;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding-bottom:140px}
+header,main{max-width:1000px;margin:auto;padding:12px 16px}
+header{padding-bottom:0}
+h1{font-size:1.25rem;letter-spacing:.06em;margin:0}
+h2{font-size:1.05rem;margin:0 0 8px}
+header p{margin:2px 0 0;color:var(--mu);font-size:.85rem}
+small{display:block;color:var(--mu);font-size:.8rem}
+nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:var(--card);border-top:1px solid var(--bd);z-index:5;padding-bottom:env(safe-area-inset-bottom)}
+nav button{flex:1;background:none;border:0;color:var(--mu);padding:6px 1px;font-size:.62rem;min-height:56px;cursor:pointer}
+nav button.on{color:var(--ac);font-weight:700;box-shadow:inset 0 2px var(--ac)}
+@media(min-width:760px){nav{position:static;max-width:968px;margin:10px auto 0;border:1px solid var(--bd);border-radius:12px;overflow:hidden}nav button{font-size:.9rem}body{padding-bottom:24px}}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:14px;margin-bottom:12px}
+.grid{display:grid;gap:10px;grid-template-columns:repeat(2,1fr);margin-bottom:10px}
+@media(min-width:760px){.grid{grid-template-columns:repeat(3,1fr)}}
+.stat{background:var(--c2);border-radius:10px;padding:10px}.stat b{display:block;font-size:1.4rem}
+.two{display:grid;gap:10px;grid-template-columns:1fr 1fr;margin-bottom:10px}
+@media(min-width:760px){.two.w{grid-template-columns:repeat(4,1fr)}}
+button,input,select,textarea{font:inherit;color:var(--tx)}
+label{display:block;font-size:.8rem;color:var(--mu)}
+input,select,textarea{display:block;width:100%;margin-top:4px;background:var(--c2);border:1px solid var(--bd);border-radius:10px;padding:9px 10px;min-height:44px}
+input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid var(--ac);outline-offset:1px}
+input[type=checkbox]{display:inline-block;width:20px;min-height:0;height:20px;margin:0 8px 0 0;vertical-align:middle}
+input[type=range]{padding:0;min-height:32px}
+.chk{display:flex;align-items:center;color:var(--tx);min-height:44px}
+.btn{background:var(--c2);border:1px solid var(--bd);border-radius:10px;padding:9px 14px;min-height:44px;cursor:pointer}
+.btn.p{background:var(--ac);border-color:var(--ac);color:#fff;font-weight:600}
+.btn.d{color:var(--er)}
+.btn.s{min-height:36px;padding:5px 10px;font-size:.85rem}
+.acts{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.bar{height:8px;background:var(--c2);border-radius:9px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--ac)}.bar i.ok{background:var(--ok)}
+.row{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:10px 0;border-top:1px solid var(--bd)}
+.row:first-of-type{border-top:0}.grow{flex:1;min-width:200px}
+.tag{font-size:.72rem;padding:2px 8px;border-radius:99px;background:var(--c2);border:1px solid var(--bd);color:var(--mu);white-space:nowrap}
+.tag.ok{color:var(--ok);border-color:var(--ok)}
+.empty{color:var(--mu);text-align:center;padding:16px 8px;margin:0}
+.dim{opacity:.6}.note{font-style:italic}.err{color:var(--er);margin:8px 0;min-height:1em}
+.chart{display:flex;gap:6px;align-items:flex-end}.col{flex:1;text-align:center;min-width:0}
+.cb{height:72px;display:flex;align-items:flex-end;background:var(--c2);border-radius:6px;overflow:hidden}
+.cb i{display:block;width:100%;background:var(--ac)}.cb i.ok{background:var(--ok)}
+.col.sel small:first-child{color:var(--tx);font-weight:700}
+.mt{margin-top:10px}
+dialog{background:var(--card);color:var(--tx);border:1px solid var(--bd);border-radius:16px;width:min(560px,94vw);max-height:92vh;padding:16px}
+dialog::backdrop{background:rgba(0,0,0,.6)}
+dialog label{margin-bottom:10px}dialog .two label{margin-bottom:0}
+#demo{width:min(400px,96vw);padding:12px;overflow:auto}
+.dseg{display:flex;gap:4px;margin-bottom:8px}.dseg span{flex:1;height:4px;background:var(--c2);border-radius:4px;overflow:hidden}
+.dseg i{display:block;height:100%;width:0;background:var(--ac);transition:width linear}.dseg i.f{width:100%}
+.dhead{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}.dhead b{font-size:.82rem;color:var(--mu)}
+.scr{position:relative;height:400px;overflow:hidden;background:var(--bg);border:1px solid var(--bd);border-radius:20px;padding:12px;pointer-events:none}
+.scr .card{padding:10px;margin-bottom:8px}.scr .grid{grid-template-columns:repeat(2,1fr)}
+.scr .bar i{transition:width .9s ease}.scr .cb i{transition:height .7s ease}
+.fx{opacity:0;transition:opacity .4s}.fx.in{opacity:1}
+.fi{background:var(--c2);border:1px solid var(--bd);border-radius:10px;padding:9px 10px;min-height:40px;margin-top:4px}
+.hit{border-color:var(--ac)!important;box-shadow:0 0 0 2px rgba(91,124,255,.45)}
+.cur{position:absolute;left:0;top:0;width:18px;height:18px;margin:-9px 0 0 -9px;border-radius:50%;background:rgba(255,255,255,.9);box-shadow:0 0 0 2px var(--ac);transform:translate(170px,380px);transition:transform .5s ease;z-index:9}
+.cur.tap{animation:rip .5s}
+@keyframes rip{from{box-shadow:0 0 0 2px var(--ac),0 0 0 0 rgba(91,124,255,.8)}to{box-shadow:0 0 0 2px var(--ac),0 0 0 22px rgba(91,124,255,0)}}
+.fab2{position:absolute;right:14px;bottom:14px;width:48px;height:48px;border-radius:50%;background:var(--ac);color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.6rem}
+.sheet{position:absolute;left:0;right:0;bottom:0;min-height:170px;background:var(--card);border-top:1px solid var(--bd);border-radius:16px 16px 0 0;padding:16px}
+.toast2{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);padding:8px 14px;border-radius:10px;background:var(--c2);border:1px solid var(--ok);white-space:nowrap}
+.cap{min-height:88px;margin:10px 0}.cap p{margin:4px 0 0;color:var(--mu)}
+@media(prefers-reduced-motion:reduce){.cur,.fx,.scr .bar i,.scr .cb i{transition:none}}
+body{background:radial-gradient(800px 380px at 85% -8%,#1c2b6b 0,transparent 65%) fixed,var(--bg)}
+h1{background:linear-gradient(90deg,#9aaeff,#3ecf8e);-webkit-background-clip:text;background-clip:text;color:transparent;display:inline-block}
+.hero{display:flex;gap:14px;align-items:center;background:linear-gradient(135deg,#1a2757,var(--card) 70%)}
+.ring{position:relative;width:96px;height:96px;flex:none}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.rb,.rf{fill:none;stroke-width:9}.rb{stroke:var(--c2)}.rf{stroke:var(--ac);stroke-linecap:round}.rf.ok{stroke:var(--ok)}
+.ring>div{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}.ring b{font-size:1.25rem}
+.chip{display:inline-block;padding:3px 9px;border-radius:99px;background:var(--c2);border:1px solid var(--bd);font-size:.78rem;margin:6px 6px 6px 0}
+.big{display:block;font-size:1.5rem}
+details.card summary{cursor:pointer}
+.bgs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+@media(min-width:760px){.bgs{grid-template-columns:repeat(4,1fr)}}
+.bg{background:var(--c2);border:1px solid var(--bd);border-radius:12px;padding:10px 6px;text-align:center}
+.bg span{font-size:1.7rem;display:block}.bg b{font-size:.78rem;display:block}.bg small{font-size:.68rem}
+.bg.lock{opacity:.45;filter:grayscale(1)}
+.conf{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:30}
+.conf i{position:absolute;top:-30px;font-style:normal;animation:fall 1.7s ease-in forwards}
+@keyframes fall{to{transform:translateY(105vh) rotate(360deg);opacity:.2}}
+nav button span{display:block;font-size:1.15rem;line-height:1.3}
+.tip{background:var(--c2);border:1px solid var(--bd);border-radius:12px;padding:10px 12px;margin-bottom:12px;color:var(--mu);font-size:.88rem}
+.tip summary{cursor:pointer;color:var(--tx);font-weight:600}.tip p{margin:8px 0 0}
+.hint{font-size:.75rem;color:var(--mu);margin:-4px 0 10px}
+.steps{list-style:none;margin:8px 0 0;padding:0}
+.steps li{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:8px 0;border-top:1px solid var(--bd)}
+.steps li.done{color:var(--mu)}.steps li.done b{text-decoration:line-through}
+.ck{display:inline-block;width:22px;color:var(--ok)}
+.help h3{font-size:.95rem;margin:16px 0 4px}.help p,.help li{color:var(--mu);margin:4px 0}.help ul{padding-left:18px;margin:4px 0}.help b{color:var(--tx)}
+.fab{position:fixed;right:16px;bottom:calc(76px + env(safe-area-inset-bottom));width:56px;height:56px;border-radius:50%;background:var(--ac);color:#fff;border:0;font-size:1.9rem;line-height:1;z-index:6;box-shadow:0 4px 14px rgba(0,0,0,.45);cursor:pointer}
+@media(min-width:760px){.fab{bottom:24px;right:24px}body{padding-bottom:90px}}
+#toast{position:fixed;left:50%;bottom:88px;transform:translateX(-50%);max-width:92vw;padding:10px 16px;border-radius:10px;background:var(--c2);border:1px solid var(--ok);z-index:20;display:none}
+#toast.show{display:block}#toast.err{border-color:var(--er)}
+</style>
+</head>
+<body>
+<header>
+  <h1>JEE 2028 STUDY OS</h1>
+  <p>Track your effort. Master your concepts. Improve every week.</p>
+</header>
+<nav aria-label="Sections">
+  <button data-a="tab" data-id="dash"><span aria-hidden="true">🏠</span>Home</button>
+  <button data-a="tab" data-id="log"><span aria-hidden="true">📝</span>Log</button>
+  <button data-a="tab" data-id="plan"><span aria-hidden="true">🗓️</span>Timetable</button>
+  <button data-a="tab" data-id="week"><span aria-hidden="true">📊</span>Weekly</button>
+  <button data-a="tab" data-id="chap"><span aria-hidden="true">📚</span>Chapters</button>
+  <button data-a="tab" data-id="data"><span aria-hidden="true">💾</span>Data</button>
+  <button data-a="tab" data-id="help"><span aria-hidden="true">❓</span>Help</button>
+</nav>
+<main id="view"></main>
+<button class="fab" data-a="new" aria-label="Add study session" title="Add study session">+</button>
+<dialog id="dlg" aria-label="Edit form"><form id="dform"></form></dialog>
+<dialog id="demo" aria-label="Video-style demo">
+  <div class="dseg" id="dSeg"></div>
+  <div class="dhead"><b>Demo · sample data, nothing is saved</b><button class="btn s" data-a="democlose" aria-label="Close demo">✕ Close</button></div>
+  <div class="scr" id="dScr" aria-hidden="true"></div>
+  <div class="cap" aria-live="polite"><b id="dTitle"></b><p id="dTxt"></p></div>
+  <div class="acts" style="justify-content:center"><button class="btn" data-a="demoprev">◀ Back</button><button class="btn p" data-a="demoplay" id="dPlay">❚❚ Pause</button><button class="btn" data-a="demonext" id="dNext">Next ▶</button></div>
+</dialog>
+<div id="toast" role="status" aria-live="polite"></div>
+<noscript><p style="padding:16px">This app needs JavaScript enabled.</p></noscript>
+<script>
+'use strict';
+const KEY='jee2028-study-os-v1';
+const SUBJ=['Physics','Chemistry','Mathematics','Mixed Practice','Revision'];
+const STAT=['Not Started','In Progress','Completed'];
+const CSTAT=['Not Started','Learning','Practicing','Revision Needed','Mastered'];
+const CSUB=['Physics','Chemistry','Mathematics'];
+const RV=[['worked','What worked this week?'],['bottleneck','Biggest bottleneck'],['mistakes','Repeated mistakes'],['revise','Chapters needing revision'],['priority','Priority for next week'],['improve','One measurable improvement']];
+const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+/* ---------- helpers ---------- */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+const pad=n=>String(n).padStart(2,'0');
+const iso=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const parse=s=>{const [y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)};
+const addDays=(s,n)=>{const d=parse(s);d.setDate(d.getDate()+n);return iso(d)};
+const wkStart=s=>addDays(s,-((parse(s).getDay()+6)%7));
+const validDate=s=>typeof s==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(s)&&iso(parse(s))===s;
+const validTime=s=>typeof s==='string'&&/^([01]\d|2[0-3]):[0-5]\d$/.test(s);
+const toMin=t=>{const [h,m]=t.split(':').map(Number);return h*60+m};
+const num=(v,min=0,max=1e6)=>{v=Math.round(Number(v));return Number.isFinite(v)?Math.min(max,Math.max(min,v)):min};
+const str=(v,n)=>typeof v==='string'?v.slice(0,n):'';
+const pick=(v,l)=>l.includes(v)?v:l[0];
+const pct=(a,b)=>b?Math.round(a/b*100):0;
+const fm=m=>{m=Math.round(m);return m>=60?Math.floor(m/60)+'h '+pad(m%60)+'m':m+'m'};
+const sum=(a,k)=>a.reduce((t,x)=>t+(+x[k]||0),0);
+const agg=a=>({act:sum(a,'actual'),pl:sum(a,'planned'),att:sum(a,'att'),cor:sum(a,'cor'),done:a.filter(s=>s.status==='Completed').length,n:a.length});
+const acc=t=>t.att?pct(t.cor,t.att)+'%':'n/a';
+const byTime=(a,b)=>(a.date+a.start).localeCompare(b.date+b.start);
+const stat=(l,v,s)=>`<div class="stat"><small>${l}</small><b>${v}</b>${s?`<small>${s}</small>`:''}</div>`;
+const bar=(p,c)=>`<div class="bar" role="progressbar" aria-valuenow="${Math.min(100,p)}" aria-valuemin="0" aria-valuemax="100"><i class="${c||''}" style="width:${Math.min(100,p)}%"></i></div>`;
+const empty=t=>`<p class="empty">${t}</p>`;
+let tt;
+function toast(m,t){const e=$('#toast');e.textContent=m;e.className='show '+(t||'');clearTimeout(tt);tt=setTimeout(()=>{e.className=''},3800)}
+
+/* ---------- state ---------- */
+const defBlocks=()=>[['05:00','06:30','Morning self-study / backlog',1],['07:45','13:00','School',0],['13:00','13:30','Lunch and rest',0],['13:30','15:30','DPP and independent problem solving',1],['16:00','21:00','PW Arjuna 2.0 classes',1],['21:00','21:45','Dinner and break',0],['21:45','23:15','Active recall, formula revision, and error notebook',1]].map(([start,end,title,study])=>({id:uid(),start,end,title,study:!!study}));
+const fresh=()=>({settings:{target:10,badges:[],examDate:"",lv:null},sessions:[],blocks:defBlocks(),reviews:{},chapters:[]});
+let S=fresh();
+let tab='dash',date=iso(new Date()),wk=wkStart(date),chSub='Physics',flt={date:'',subject:'',status:''},SAVE=null;
+
+function clean(o){
+  if(!o||typeof o!=='object'||!Array.isArray(o.sessions)||!Array.isArray(o.blocks)||!Array.isArray(o.chapters)||!o.reviews||typeof o.reviews!=='object')return null;
+  const tg=Number(o.settings&&o.settings.target);
+  const s={settings:{target:tg>=0.5&&tg<=24?tg:10,hideGuide:!!(o.settings&&o.settings.hideGuide),backedUp:!!(o.settings&&o.settings.backedUp),examDate:o.settings&&validDate(o.settings.examDate)?o.settings.examDate:'',lv:o.settings&&Number.isInteger(o.settings.lv)?o.settings.lv:null,badges:Array.isArray(o.settings&&o.settings.badges)?o.settings.badges.filter(b=>typeof b==='string').slice(0,50):[]},sessions:[],blocks:[],chapters:[],reviews:{}};
+  o.sessions.forEach(x=>{if(!x||!validDate(x.date))return;const att=num(x.att,0,1e5);s.sessions.push({id:str(x.id,40)||uid(),date:x.date,block:str(x.block,100),subject:pick(x.subject,SUBJ),topic:str(x.topic,150),task:str(x.task,300),start:validTime(x.start)?x.start:'',end:validTime(x.end)?x.end:'',planned:num(x.planned,0,1440),actual:num(x.actual,0,1440),att,cor:Math.min(att,num(x.cor,0,1e5)),status:pick(x.status,STAT),notes:str(x.notes,1000)})});
+  o.blocks.forEach(x=>{if(x&&validTime(x.start)&&validTime(x.end)&&toMin(x.end)>toMin(x.start)&&str(x.title,100))s.blocks.push({id:str(x.id,40)||uid(),start:x.start,end:x.end,title:str(x.title,100),study:!!x.study})});
+  o.chapters.forEach(x=>{if(x&&str(x.name,100)&&CSUB.includes(x.subject))s.chapters.push({id:str(x.id,40)||uid(),subject:x.subject,name:str(x.name,100),status:pick(x.status,CSTAT),lecture:num(x.lecture,0,100),notes:!!x.notes,dpp:pick(x.dpp,STAT),solved:num(x.solved,0,1e5),weak:str(x.weak,300),revDate:validDate(x.revDate)?x.revDate:''})});
+  Object.keys(o.reviews).forEach(k=>{const r=o.reviews[k];if(validDate(k)&&r&&typeof r==='object'){s.reviews[k]={};RV.forEach(([f])=>{s.reviews[k][f]=str(r[f],2000)})}});
+  return s;
+}
+function load(){
+  try{const r=localStorage.getItem(KEY);if(r){const c=clean(JSON.parse(r));if(c)S=c;else toast('Saved data was invalid and was ignored.','err')}}
+  catch(e){toast('Could not read saved data. Changes may not persist in this browser.','err')}
+}
+function save(){
+  try{localStorage.setItem(KEY,JSON.stringify(S))}
+  catch(e){toast('Could not save: browser storage is full or blocked. Export a backup.','err')}
+}
+
+/* ---------- views ---------- */
+const daySess=d=>S.sessions.filter(s=>s.date===d);
+const wkSess=w=>S.sessions.filter(s=>s.date>=w&&s.date<=addDays(w,6));
+const dow=d=>DAYS[parse(d).getDay()];
+
+function sRow(s,showDate){
+  const id=esc(s.id),done=s.status==='Completed';
+  return `<div class="row" style="border-left:3px solid ${SC[s.subject]||"#5b7cff"};padding-left:10px"><div class="grow"><b>${esc(s.topic||s.task)}</b>${s.topic&&s.task?`<div>${esc(s.task)}</div>`:''}<small>${showDate?esc(s.date)+' · ':''}${esc(s.subject)}${s.block?' · '+esc(s.block):''}${s.start?' · '+s.start+'–'+s.end:''}</small><small>Actual ${fm(s.actual)} of ${fm(s.planned)} planned${s.att?' · '+s.cor+'/'+s.att+' correct':''}</small>${s.notes?`<small class="note">${esc(s.notes)}</small>`:''}</div><div class="acts"><span class="tag ${done?'ok':''}">${esc(s.status)}</span><button class="btn s" data-a="tog" data-id="${id}">${done?'Reopen':'Complete'}</button><button class="btn s" data-a="edit" data-id="${id}">Edit</button><button class="btn s d" data-a="del" data-id="${id}">Delete</button></div></div>`;
+}
+
+function vDash(){
+  const a=daySess(date),t=agg(a),tg=S.settings.target*60,p=pct(t.act,tg);
+  const w=wkStart(date),days=[0,1,2,3,4,5,6].map(i=>{const d=addDays(w,i);return{d,m:sum(daySess(d),'actual')}});
+  const mx=Math.max(tg,...days.map(x=>x.m),1),wt=sum(days,'m');
+  const pend=a.filter(s=>s.status!=='Completed').sort(byTime),done=a.filter(s=>s.status==='Completed').sort(byTime);
+  const blocks=[...S.blocks].sort((x,y)=>x.start.localeCompare(y.start));
+  return hero(p)+guide()+`<div class="card"><div class="two"><label>Date<input type="date" value="${date}" data-c="date" required></label><label>Daily focused target (hours)<input type="number" min="0.5" max="24" step="0.5" value="${S.settings.target}" data-c="target"></label></div><div class="acts"><button class="btn" data-a="today">Today</button><button class="btn p" data-a="new">+ Add study session</button></div></div>
+  <div class="card"><div class="grid">${stat('Focused study',fm(t.act),'target '+fm(tg))}${stat('Target completed',p+'%')}${stat('Tasks completed',t.done+' / '+t.n)}${stat('Questions correct',t.cor+' / '+t.att,'attempted '+t.att)}${stat('Accuracy',acc(t))}${stat('Planned today',fm(t.pl))}</div>${bar(p,p>=100?'ok':'')}<small class="mt">${p>=100?'Target reached. Great work!':'Still to go today: '+fm(tg-t.act)+' of focused study.'}</small></div>${exam()}
+  <div class="card"><h2>Weekly study hours: ${fm(wt)}</h2><small class="mt">Week of ${w}. Green = target met.</small><div class="chart mt">${days.map(x=>`<div class="col ${x.d===date?'sel':''}"><div class="cb"><i class="${x.m>=tg?'ok':''}" style="height:${pct(x.m,mx)}%"></i></div><small>${dow(x.d)}</small><small>${fm(x.m)}</small></div>`).join('')}</div></div>
+  <div class="card"><h2>Today's study schedule</h2>${blocks.length?blocks.map(b=>`<div class="row ${b.study?'':'dim'}"><div>${b.start}–${b.end} · ${esc(b.title)}</div><span class="tag">${b.study?'Study block':'Not study'}</span></div>`).join(''):empty('No timetable blocks. Add them in Timetable.')}</div>
+  <div class="card"><h2>Pending tasks (${pend.length})</h2>${pend.length?pend.map(s=>sRow(s)).join(''):a.length?empty('Nothing pending.'):empty('No sessions on this date yet.')+'<div class="acts" style="justify-content:center"><button class="btn p" data-a="new">+ Add your first session</button></div>'}</div>
+  <div class="card"><h2>Completed tasks (${done.length})</h2>${done.length?done.map(s=>sRow(s)).join(''):empty('No completed sessions on this date.')}</div>${badgesCard()}`;
+}
+
+function guide(){
+  if(S.settings.hideGuide)return '';
+  const st=[
+    [S.sessions.length>0,'Log your first study session','new','Add session'],
+    [S.chapters.length>0,'Add a chapter you are studying','chap','Add chapter'],
+    [Object.values(S.reviews).some(r=>Object.values(r).some(Boolean)),'Write a weekly reflection','week','Open Weekly'],
+    [!!S.settings.backedUp,'Export a backup of your data','data','Open Data']
+  ],n=st.filter(x=>x[0]).length;
+  return `<div class="card"><h2>Getting started: ${n} of 4 done</h2>${bar(n*25,n===4?'ok':'')}<ul class="steps">${st.map(([d,t,a,l])=>`<li class="${d?'done':''}"><span><span class="ck">${d?'✓':'○'}</span><b>${t}</b></span>${d?'':`<button class="btn s" data-a="${a==='new'?'new':'tab'}" data-id="${a}">${l}</button>`}</li>`).join('')}</ul><div class="acts mt"><button class="btn s p" data-a="demo">▶ Watch demo</button><button class="btn s" data-a="guide" data-id="0">Hide this guide</button></div></div>`;
+}
+function vHelp(){
+  return `<div class="card" style="text-align:center"><h2>Watch the 1-minute demo</h2><small>See step by step how to log a session, track chapters, review your week and back up your data. It uses sample data only.</small><button class="btn p mt" data-a="demo">▶ Play demo</button></div><div class="card help"><h2>How to use Study OS</h2>
+  <h3>Quick start</h3><ul><li>After you study, tap the <b>+</b> button and log the session.</li><li>On <b>Home</b>, set your daily study-hour target.</li><li>In <b>Chapters</b>, add the chapters you are studying and update them as you learn.</li><li>Once a week, open <b>Weekly</b> and write your reflection.</li><li>In <b>Data</b>, export a backup every week.</li></ul>
+  <h3>Planned vs actual minutes</h3><p>Planned minutes are what you intend to study. Actual focused minutes are the time you really studied without distractions. Only actual minutes count in your progress.</p>
+  <h3>Chapter status</h3><ul><li><b>Learning</b>: watching lectures or reading notes.</li><li><b>Practicing</b>: solving questions.</li><li><b>Revision Needed</b>: you need to go over it again.</li><li><b>Mastered</b>: you can solve it confidently. Only you decide this.</li></ul>
+  <h3>Accuracy</h3><p>Accuracy = questions correct divided by questions attempted, times 100.</p>
+  <h3>Streaks, XP and badges</h3><p>Streak = days in a row with focused study logged. XP = 1 per focused minute, +10 per completed task, +2 per correct answer. Levels and badges come only from your real data.</p>
+  <h3>Timetable</h3><p>The timings are a starting guide. Edit, add or delete blocks. School, meals and breaks are not study time unless you mark a block as a study block.</p>
+  <h3>Your data</h3><p>Everything is saved only in this browser on this device. It is not synced to other devices, and it is lost if you clear site data or change phones. Export a backup regularly.</p>
+  <div class="acts mt"><button class="btn" data-a="guide" data-id="1">Show getting-started guide</button></div></div>`;
+}
+function vLog(){
+  const L=S.sessions.filter(s=>(!flt.date||s.date===flt.date)&&(!flt.subject||s.subject===flt.subject)&&(!flt.status||s.status===flt.status)).sort((a,b)=>byTime(b,a));
+  const opt=(arr,v)=>'<option value="">All</option>'+arr.map(x=>`<option${x===v?' selected':''}>${x}</option>`).join('');
+  return `<div class="card"><div class="two w"><label>Date<input type="date" value="${flt.date}" data-c="flt" data-f="date"></label><label>Subject<select data-c="flt" data-f="subject">${opt(SUBJ,flt.subject)}</select></label><label>Status<select data-c="flt" data-f="status">${opt(STAT,flt.status)}</select></label></div><div class="acts"><button class="btn" data-a="clrf">Clear filters</button><button class="btn p" data-a="new">+ Add study session</button></div></div>
+  <div class="card"><h2>Study sessions (${L.length})</h2>${L.length?L.map(s=>sRow(s,true)).join(''):empty(S.sessions.length?'No sessions match these filters.':'No sessions logged yet. Tap "Add study session" to log your first one.')}</div>`;
+}
+
+function vPlan(){
+  const B=[...S.blocks].sort((x,y)=>x.start.localeCompare(y.start));
+  const m=b=>toMin(b.end)-toMin(b.start),st=sum(B.filter(b=>b.study).map(b=>({v:m(b)})),'v'),ns=sum(B.filter(b=>!b.study).map(b=>({v:m(b)})),'v');
+  return `<div class="card"><h2>Daily timetable</h2><small>Reference timings only. Edit them to fit your day. Only blocks marked "Study block" count toward scheduled study time; actual study time comes only from logged sessions.</small><div class="grid mt">${stat('Scheduled study',fm(st))}${stat('Not study (school, meals, breaks)',fm(ns))}</div><button class="btn p" data-a="newb">+ Add block</button></div>
+  <div class="card">${B.length?B.map(b=>{const id=esc(b.id);return `<div class="row ${b.study?'':'dim'}"><div class="grow"><b>${b.start}–${b.end}</b><div>${esc(b.title)}</div><small>${fm(m(b))}</small></div><div class="acts"><span class="tag ${b.study?'ok':''}">${b.study?'Study block':'Not study'}</span>${b.study?`<button class="btn s" data-a="plan" data-id="${id}">Plan session</button>`:''}<button class="btn s" data-a="editb" data-id="${id}">Edit</button><button class="btn s d" data-a="delb" data-id="${id}">Delete</button></div></div>`}).join(''):empty('No blocks yet. Add your first timetable block.')}</div>`;
+}
+
+function vWeek(){
+  const a=wkSess(wk),t=agg(a),rv=S.reviews[wk]||{},tg=S.settings.target*60;
+  const days=[0,1,2,3,4,5,6].map(i=>{const d=addDays(wk,i);return{d,m:sum(daySess(d),'actual')}});
+  const mx=Math.max(tg,...days.map(x=>x.m),1),studied=days.filter(x=>x.m>0).length;
+  const sub=SUBJ.map(s=>({s,m:sum(a.filter(x=>x.subject===s),'actual')}));
+  return `<div class="card"><div class="acts"><button class="btn" data-a="wk" data-id="-1">&lt; Prev</button><b>${wk} to ${addDays(wk,6)}</b><button class="btn" data-a="wk" data-id="1">Next &gt;</button><button class="btn" data-a="wk" data-id="now">This week</button></div></div>
+  <div class="card"><h2>Week summary</h2><div class="grid">${stat('Focused study',fm(t.act))}${stat('Planned vs actual',fm(t.pl)+' / '+fm(t.act),t.pl?pct(t.act,t.pl)+'% of plan':'no plan logged')}${stat('Tasks completed',t.done+' / '+t.n,t.n?pct(t.done,t.n)+'% completion':'no tasks')}${stat('Questions correct',t.cor+' / '+t.att,'attempted '+t.att)}${stat('Accuracy',acc(t))}${stat('Days studied',studied+' / 7')}</div></div>
+  <div class="card"><h2>Subject-wise study time</h2>${t.act?sub.map(x=>`<div class="mt"><small>${x.s}: ${fm(x.m)} (${pct(x.m,t.act)}%)</small><div class="bar"><i style="width:${pct(x.m,t.act)}%;background:${SC[x.s]}"></i></div></div>`).join(''):empty('No focused study logged this week.')}</div>
+  <div class="card"><h2>Daily consistency</h2><div class="chart">${days.map(x=>`<div class="col"><div class="cb"><i class="${x.m>=tg?'ok':''}" style="height:${pct(x.m,mx)}%"></i></div><small>${dow(x.d)}</small><small>${fm(x.m)}</small></div>`).join('')}</div></div>
+  <div class="card"><h2>Weekly reflection</h2>${RV.map(([f,l])=>`<label class="mt">${l}<textarea rows="3" maxlength="2000" data-c="rv" data-f="${f}">${esc(rv[f]||'')}</textarea></label>`).join('')}<small class="mt">Saved automatically when you leave a field.</small></div>`;
+}
+
+function chCard(c){
+  const id=esc(c.id),at=`data-c="ch" data-id="${id}"`;
+  const sel=(l,f,o)=>`<label>${l}<select ${at} data-f="${f}">${o.map(x=>`<option${x===c[f]?' selected':''}>${x}</option>`).join('')}</select></label>`;
+  return `<div class="card"><div class="row"><b>${esc(c.name)}</b><button class="btn s d" data-a="delc" data-id="${id}">Delete</button></div><div class="two">${sel('Status','status',CSTAT)}${sel('DPP / homework','dpp',STAT)}</div>
+  <label>Lecture progress: <span>${c.lecture}</span>%<input type="range" min="0" max="100" step="5" value="${c.lecture}" ${at} data-f="lecture"></label>
+  <div class="two"><label class="chk"><input type="checkbox" ${at} data-f="notes" ${c.notes?'checked':''}>Notes completed</label><label>Questions solved<input type="number" min="0" step="1" value="${c.solved}" ${at} data-f="solved"></label></div>
+  <div class="two"><label>Next revision date<input type="date" value="${c.revDate}" ${at} data-f="revDate"></label><label>Weak concepts<input type="text" maxlength="300" value="${esc(c.weak)}" ${at} data-f="weak"></label></div></div>`;
+}
+function vChap(){
+  const L=S.chapters.filter(c=>c.subject===chSub),m=L.filter(c=>c.status==='Mastered').length;
+  return `<div class="card"><div class="acts">${CSUB.map(s=>`<button class="btn ${s===chSub?'p':''}" data-a="chs" data-id="${s}">${s} (${S.chapters.filter(c=>c.subject===s).length})</button>`).join('')}</div>
+  <form id="chAdd" class="acts mt"><input id="chName" style="flex:1;margin:0" maxlength="100" placeholder="New ${chSub} chapter name" aria-label="New chapter name" required><button class="btn p">Add chapter</button></form></div>
+  ${L.length?`<small style="margin-bottom:8px">${L.length} chapters · ${m} marked Mastered</small>`+L.map(chCard).join(''):`<div class="card">${empty('No '+chSub+' chapters yet. Add the chapters you are studying.')}</div>`}`;
+}
+
+function vData(){
+  return `<div class="card"><h2>Backup and export</h2><div class="acts"><button class="btn p" data-a="expj">Export JSON backup</button><button class="btn" data-a="expc">Export study log (CSV)</button></div><label class="mt">Import JSON backup<input type="file" accept="application/json,.json" data-c="imp"></label></div>
+  <div class="card"><h2>Stored data</h2><small>${S.sessions.length} sessions · ${S.blocks.length} timetable blocks · ${S.chapters.length} chapters · ${Object.keys(S.reviews).length} weekly reviews</small><p>Your data is saved in this browser's localStorage. It stays on this device and browser, is not synced between devices, and is lost if you clear site data. Export a backup regularly, and import it to move to another device.</p></div>
+  <div class="card"><h2>Reset</h2><small>Deletes all sessions, chapters and reviews and restores the default timetable.</small><button class="btn d mt" data-a="reset">Delete all data</button></div>`;
+}
+/* ---------- demo walkthrough (sample data only, never saved) ---------- */
+const DEMO=[
+{t:'Welcome',d:5000,x:'This 1-minute tour shows how to use Study OS. It uses sample data only and nothing is saved.',h:`<div class="card"><h2>JEE 2028 STUDY OS</h2><small>Track your effort. Master your concepts. Improve every week.</small></div><div class="card"><div class="row fx" data-s='[[700,"show"]]'>🏠 Home: today at a glance</div><div class="row fx" data-s='[[1200,"show"]]'>📝 Log: your study diary</div><div class="row fx" data-s='[[1700,"show"]]'>📚 Chapters: syllabus progress</div><div class="row fx" data-s='[[2200,"show"]]'>📊 Weekly: review and improve</div><div class="row fx" data-s='[[2700,"show"]]'>💾 Data: back up safely</div></div>`},
+{t:'Set your daily target',d:6000,x:'On Home, choose how many focused hours you want to study each day. The default is 10.',h:`<div class="card"><small>Date</small><div class="fi">Today</div><small class="mt">Daily focused target (hours)</small><div class="fi" data-s='[[900,"tap"],[1500,"type","10"]]'>8</div></div><div class="card"><div class="stat"><small>Focused study</small><b>0m</b><small class="fx" data-s='[[3000,"show"]]'>target 10h 00m</small></div></div>`},
+{t:'Tap + to add a session',d:5000,x:'Use the blue + button on any page to log a study session.',h:`<div class="card"><h2>Pending tasks (0)</h2><p class="empty">No sessions on this date yet.</p></div><div class="fab2" data-s='[[1000,"tap"]]'>+</div><div class="sheet fx" data-s='[[2200,"show"]]'><b>Add study session</b><small>A form opens where you log what you studied.</small></div>`},
+{t:'Fill in the session',d:10000,x:'Add subject, topic and times. Actual is the time you really stayed focused. Only actual minutes count.',h:`<div class="card"><b>Add study session</b><small class="mt">Subject</small><div class="acts"><span class="tag">Chemistry</span><span class="tag" data-s='[[800,"tap"]]'>Physics</span><span class="tag">Maths</span></div><small class="mt">Chapter / topic</small><div class="fi" data-s='[[1300,"tap"],[1800,"type","Rotational Motion"]]'></div><div class="two mt"><div><small>Planned min</small><div class="fi" data-s='[[3000,"tap"],[3500,"type","90"]]'></div></div><div><small>Actual focused min</small><div class="fi" data-s='[[3900,"tap"],[4300,"type","75"]]'></div></div></div><div class="two"><div><small>Attempted</small><div class="fi" data-s='[[4800,"tap"],[5200,"type","20"]]'></div></div><div><small>Correct</small><div class="fi" data-s='[[5600,"tap"],[6000,"type","16"]]'></div></div></div><button class="btn p" style="width:100%" tabindex="-1" data-s='[[7000,"tap"]]'>Save</button></div><div class="toast2 fx" data-s='[[7700,"show"]]'>Session saved.</div>`},
+{t:'Complete it and watch progress',d:8000,x:'Tap Complete when you finish. Your stats, accuracy and target bar update by themselves.',h:`<div class="card"><div class="row"><div><b>Rotational Motion</b><small>Physics · Actual 1h 15m of 1h 30m · 16/20 correct</small></div><span class="tag" data-s='[[2200,"type","Completed"]]'>In Progress</span></div><button class="btn s" tabindex="-1" data-s='[[1200,"tap"]]'>Complete</button></div><div class="card"><div class="grid"><div class="stat"><small>Focused study</small><b data-s='[[2200,"type","1h 15m"]]'>0m</b></div><div class="stat"><small>Tasks completed</small><b data-s='[[2300,"type","1 / 1"]]'>0 / 1</b></div><div class="stat"><small>Questions correct</small><b data-s='[[2400,"type","16 / 20"]]'>0 / 0</b></div><div class="stat"><small>Accuracy</small><b data-s='[[2500,"type","80%"]]'>n/a</b></div></div><div class="bar"><i style="width:0" data-s='[[2200,"w","12%"]]'></i></div><small class="mt">Still to go today: 8h 45m of focused study.</small></div>`},
+{t:'Track your chapters',d:9000,x:'Add a chapter, then change its status as you learn. Mastery is your own call. The app never decides it.',h:`<div class="card"><div class="acts"><div class="fi" style="flex:1;margin:0" data-s='[[300,"tap"],[500,"type","Rotational Motion"]]'></div><button class="btn p s" tabindex="-1" data-s='[[1900,"tap"]]'>Add</button></div></div><div class="card fx" data-s='[[2400,"show"]]'><b>Rotational Motion</b><small class="mt">Status</small><div class="fi" data-s='[[3000,"tap"],[3300,"type","Learning"],[4800,"tap"],[5100,"type","Practicing"],[6600,"tap"],[6900,"type","Mastered"]]'>Not Started</div><small class="mt">Lecture progress</small><div class="bar"><i style="width:0" data-s='[[3300,"w","40%"],[5100,"w","80%"],[6900,"w","100%"]]'></i></div></div>`},
+{t:'Review your week',d:8000,x:'Weekly shows your hours, accuracy and subject time. Write what to fix next week.',h:`<div class="card"><h2>Weekly study hours</h2><div class="chart">${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map((d,i)=>`<div class="col"><div class="cb"><i style="height:0" data-s='[[${600+i*250},"h","${[50,70,40,85,60,90,30][i]}%"]]'></i></div><small>${d}</small></div>`).join('')}</div></div><div class="card"><small>Biggest bottleneck</small><div class="fi" data-s='[[3200,"tap"],[3600,"type","Too many silly mistakes in Maths"]]'></div></div><div class="card fx" data-s='[[5800,"show"]]'><small>Your reflection is saved automatically. Next week, fix the bottleneck first.</small></div>`},
+{t:'Back up your data',d:6000,x:'Your data is saved only on this phone. Export a backup every week.',h:`<div class="card"><h2>Backup and export</h2><div class="acts"><button class="btn p" tabindex="-1" data-s='[[1000,"tap"]]'>Export JSON backup</button><button class="btn" tabindex="-1">Export study log (CSV)</button></div></div><div class="card"><small>Your data lives only in this browser on this device. It does not sync to other devices. Keep the backup file safe.</small></div><div class="toast2 fx" data-s='[[1800,"show"]]'>Backup exported.</div>`},
+{t:'You are ready',d:5000,x:'Close the demo and log your first session. You can replay this demo any time from Help.',h:`<div class="card" style="text-align:center;margin-top:80px"><h2>You are ready 🎯</h2><p>Study. Log. Review. Repeat.</p><small>Tap the blue + button to begin.</small></div>`}
+];
+let dI=0,dPlay=true,dT=[];
+function demoAct(el,a,v){
+  if(a==='show')el.classList.add('in');
+  else if(a==='w')el.style.width=v;
+  else if(a==='h')el.style.height=v;
+  else if(a==='type'){let i=0;el.textContent='';const iv=setInterval(()=>{el.textContent=v.slice(0,++i);if(i>=v.length)clearInterval(iv)},55);dT.push(iv)}
+  else if(a==='tap'){
+    const c=$('#dCur'),r=el.getBoundingClientRect(),s=$('#dScr').getBoundingClientRect();
+    c.style.transform='translate('+(r.left-s.left+r.width*0.6)+'px,'+(r.top-s.top+r.height*0.6)+'px)';
+    dT.push(setTimeout(()=>{c.classList.remove('tap');void c.offsetWidth;c.classList.add('tap');el.classList.add('hit')},450));
+  }
+}
+function demoScene(){
+  dT.forEach(clearTimeout);dT=[];
+  const sc=DEMO[dI],last=dI===DEMO.length-1;
+  $('#dScr').innerHTML=sc.h+'<i class="cur" id="dCur"></i>';
+  $('#dTitle').textContent='Step '+(dI+1)+' of '+DEMO.length+': '+sc.t;
+  $('#dTxt').textContent=sc.x;
+  $('#dNext').textContent=last?'Replay ↻':'Next ▶';
+  $('#dPlay').textContent=dPlay?'❚❚ Pause':'▶ Play';
+  $('#dSeg').innerHTML=DEMO.map((_,i)=>'<span><i class="'+(i<dI?'f':'')+'"></i></span>').join('');
+  const seg=$('#dSeg').children[dI].firstChild;seg.style.transitionDuration=sc.d+'ms';void seg.offsetWidth;seg.classList.add('f');
+  $('#dScr').querySelectorAll('[data-s]').forEach(el=>JSON.parse(el.dataset.s).forEach(([ms,a,v])=>dT.push(setTimeout(()=>demoAct(el,a,v),ms))));
+  if(dPlay&&!last)dT.push(setTimeout(()=>{dI++;demoScene()},sc.d));
+}
+function demoOpen(){dI=0;dPlay=true;$('#demo').showModal();demoScene()}
+function demoStep(n){dI=Math.min(DEMO.length-1,Math.max(0,n));dPlay=true;demoScene()}
+function demoToggle(){
+  dPlay=!dPlay;
+  if(dPlay)return demoScene();
+  dT.forEach(clearTimeout);dT=[];
+  const seg=$('#dSeg').children[dI].firstChild;seg.style.transition='none';seg.style.width=getComputedStyle(seg).width;
+  $('#dPlay').textContent='▶ Play';
+}
+$('#demo').addEventListener('close',()=>{dT.forEach(clearTimeout);dT=[]});
+
+/* ---------- engagement: streaks, XP, badges (all computed from real data) ---------- */
+const SC={Physics:'#5b7cff',Chemistry:'#3ecf8e',Mathematics:'#f5a524','Mixed Practice':'#c084fc',Revision:'#f472b6'};
+const LV=[[0,'Rookie'],[100,'Learner'],[300,'Grinder'],[700,'Achiever'],[1500,'Warrior'],[3000,'Ranker'],[6000,'Champion'],[12000,'Legend']];
+const QUOTES=['Small steps every day beat big plans someday.','One focused hour today beats five distracted ones.','Mistakes you note today become marks you win tomorrow.','Do not wait for motivation. Start for ten minutes.','Consistency is the real rank booster.','Revise today what you learned last week.','Every solved question makes the next one easier.'];
+const BADGES=[
+['first','🚀','First Step','Log your first session',x=>x.t.n>0],
+['done1','✅','Task Finisher','Complete one task',x=>x.t.done>0],
+['st3','🔥','3-Day Streak','Study 3 days in a row',x=>x.best>=3],
+['st7','⚡','7-Day Streak','Study 7 days in a row',x=>x.best>=7],
+['tgt','🎯','Target Hit','Reach your daily target once',x=>x.hit],
+['h10','⏱️','10 Hour Club','10 hours of focused study',x=>x.t.act>=600],
+['h100','🏆','100 Hour Club','100 hours of focused study',x=>x.t.act>=6000],
+['q100','🧠','Century','Attempt 100 questions',x=>x.t.att>=100],
+['acc','🎓','Sharp Shooter','80%+ accuracy on 50+ questions',x=>x.t.att>=50&&x.t.cor/x.t.att>=0.8],
+['mast','👑','Chapter Master','Mark a chapter Mastered',x=>x.mastered>0],
+['ref','📝','Reflector','Write a weekly reflection',x=>Object.values(S.reviews).some(r=>Object.values(r).some(Boolean))],
+['bk','💾','Safe Keeper','Export a backup',x=>!!S.settings.backedUp]
+];
+function stats(){
+  const t=agg(S.sessions),by={};
+  S.sessions.forEach(s=>{by[s.date]=(by[s.date]||0)+s.actual});
+  const td=iso(new Date());let d=by[td]>0?td:addDays(td,-1),st=0;
+  while(by[d]>0){st++;d=addDays(d,-1)}
+  let best=0,run=0,prev='';
+  Object.keys(by).filter(k=>by[k]>0).sort().forEach(k=>{run=prev&&addDays(prev,1)===k?run+1:1;best=Math.max(best,run);prev=k});
+  const tg=S.settings.target*60;
+  return{t,st,best,xp:t.act+t.done*10+t.cor*2,hit:Object.values(by).some(m=>m>=tg),mastered:S.chapters.filter(c=>c.status==='Mastered').length};
+}
+function lvl(xp){
+  let i=0;LV.forEach(([th],k)=>{if(xp>=th)i=k});const nx=LV[i+1];
+  return{n:i+1,name:LV[i][1],next:nx?nx[1]:'',left:nx?nx[0]-xp:0,p:nx?pct(xp-LV[i][0],nx[0]-LV[i][0]):100};
+}
+function burst(){
+  if(matchMedia('(prefers-reduced-motion:reduce)').matches)return;
+  const w=document.createElement('div');w.className='conf';w.setAttribute('aria-hidden','true');
+  for(let i=0;i<28;i++){const s=document.createElement('i');s.textContent=['🎉','✨','⭐','🔥','🎊'][i%5];s.style.cssText='left:'+Math.random()*100+'%;animation-delay:'+Math.random()*0.4+'s;font-size:'+(14+Math.random()*14)+'px';w.appendChild(s)}
+  document.body.appendChild(w);setTimeout(()=>w.remove(),2400);
+}
+let bt;
+function checkBadges(){
+  const x=stats(),L=lvl(x.xp),have=S.settings.badges=S.settings.badges||[],msg=[],old=S.settings.lv;
+  BADGES.forEach(b=>{if(!have.includes(b[0])&&b[4](x)){have.push(b[0]);msg.push('🏅 '+b[2])}});
+  S.settings.lv=Math.max(old||0,L.n);
+  if(old!=null&&L.n>old)msg.push('⭐ Level up: Lv '+L.n+' '+L.name);
+  if(msg.length||old==null)save();
+  if(msg.length){toast(msg.join(' · '));burst()}
+}
+function hero(p){
+  const x=stats(),h=new Date().getHours(),L=lvl(x.xp),C=2*Math.PI*44;
+  return `<div class="card hero"><div class="ring"><svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="44" class="rb"/><circle cx="50" cy="50" r="44" class="rf ${p>=100?'ok':''}" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C*(1-Math.min(1,p/100))).toFixed(1)}"/></svg><div><b>${p}%</b><small>${date===iso(new Date())?'today':esc(date)}</small></div></div><div class="grow"><h2>${h<12?'Good morning':h<17?'Good afternoon':'Good evening'}!</h2><small>${QUOTES[new Date().getDate()%QUOTES.length]}</small><div><span class="chip">🔥 ${x.st}-day streak</span><span class="chip">⭐ Lv ${L.n} ${L.name}</span><span class="chip">💎 ${x.xp} XP</span></div>${bar(L.p)}<small>${L.next?L.left+' XP to '+L.next:'Top level reached'}</small></div></div>`;
+}
+function exam(){
+  const e=S.settings.examDate;
+  if(!e)return `<div class="card"><label>Exam countdown (optional)<input type="date" data-c="exam" value=""></label><small class="mt">Set your exam date to see the days left.</small></div>`;
+  const n=Math.round((parse(e)-parse(iso(new Date())))/864e5);
+  return `<div class="card row" style="border:1px solid var(--bd)"><div><small>Your exam: ${esc(e)}</small><b class="big">${n>=0?n+' days to go ('+Math.floor(n/7)+' weeks)':'Exam date has passed'}</b></div><button class="btn s" data-a="exam">Change</button></div>`;
+}
+function badgesCard(){
+  const have=S.settings.badges||[];
+  return `<details class="card"><summary><b>🏅 Achievements: ${have.length} of ${BADGES.length} unlocked</b></summary><div class="bgs">${BADGES.map(b=>{const on=have.includes(b[0]);return `<div class="bg ${on?'':'lock'}"><span>${b[1]}</span><b>${b[2]}</b><small>${on?'Unlocked':b[3]}</small></div>`}).join('')}</div><small class="mt">Badges unlock only from your real study data. XP: 1 per focused minute, +10 per completed task, +2 per correct answer.</small></details>`;
+}
+const VIEWS={dash:vDash,log:vLog,plan:vPlan,week:vWeek,chap:vChap,data:vData,help:vHelp};
+const INTRO={
+  dash:'Your daily summary. Pick a date, set how many hours you want to study, and see how much you really studied. Everything here is calculated from the sessions you log.',
+  log:'Your study diary. Add one entry for every study session, then tap Complete when it is done. Use the filters to find older entries.',
+  plan:'Your daily routine. These times are only a guide and you can edit them. Study blocks count as scheduled study time; school, meals and breaks do not.',
+  week:'Review your week: hours studied, accuracy and which subjects got your time. Write a short reflection at the bottom so next week goes better.',
+  chap:'Track every chapter of Physics, Chemistry and Mathematics. Choose a subject, add a chapter, then update its progress as you learn.',
+  data:'Back up your data, move it to another phone, or download your study log as a spreadsheet (CSV).'
+};
+function render(){
+  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.id===tab));
+  const tip=INTRO[tab]?`<details class="tip" ${S.settings.hideGuide?'':'open'}><summary>What is this page?</summary><p>${INTRO[tab]}</p></details>`:'';
+  $('#view').innerHTML=tip+VIEWS[tab]();clearTimeout(bt);bt=setTimeout(checkBadges,900);
+}
+
+/* ---------- dialog forms ---------- */
+const fld=(l,i,t,v,x)=>`<label>${l}<input id="f-${i}" type="${t}" value="${esc(v)}" ${x||''}></label>`;
+const fsel=(l,i,o,v)=>`<label>${l}<select id="f-${i}">${o.map(x=>`<option${x===v?' selected':''}>${esc(x)}</option>`).join('')}</select></label>`;
+const g=i=>$('#f-'+i).value.trim();
+const ferr=m=>{$('#ferr').textContent=m};
+function openDlg(html,fn){
+  $('#dform').innerHTML=html+'<p id="ferr" class="err" role="alert"></p><div class="acts"><button class="btn p">Save</button><button type="button" class="btn" data-a="close">Cancel</button></div>';
+  SAVE=fn;$('#dlg').showModal();
+}
+function openSession(id,pre){
+  const s=id?S.sessions.find(x=>x.id===id):null;
+  const v=s||Object.assign({date,block:'',subject:'Physics',topic:'',task:'',start:'',end:'',planned:'',actual:0,att:0,cor:0,status:'Not Started',notes:''},pre||{});
+  const n='type="number" min="0" step="1" inputmode="numeric"';
+  openDlg(`<h2>${s?'Edit':'Add'} study session</h2>${fld('Date','date','date',v.date,'required')}
+  <label>Study block<input id="f-block" list="blk" maxlength="100" value="${esc(v.block)}"></label><datalist id="blk">${S.blocks.map(b=>`<option value="${esc(b.title)}">`).join('')}</datalist>
+  <p class="hint">Optional: pick a timetable block or type your own.</p>${fsel('Subject','subject',SUBJ,v.subject)}${fld('Chapter / topic','topic','text',v.topic,'maxlength="150"')}${fld('Planned task','task','text',v.task,'maxlength="300"')}
+  <div class="two">${fld('Start time','start','time',v.start)}${fld('End time','end','time',v.end)}</div><p class="hint">Optional. If you leave planned minutes empty, they are calculated from start and end time.</p>
+  <div class="two">${fld('Planned minutes','planned','number',v.planned,'min="0" max="1440" step="1" inputmode="numeric"')}${fld('Actual focused minutes','actual','number',v.actual,'min="0" max="1440" step="1" inputmode="numeric"')}</div><p class="hint">Planned = what you intend to study. Actual = time you really stayed focused. Only actual minutes count in your stats.</p>
+  <div class="two">${fld('Questions attempted','att','number',v.att,n)}${fld('Questions correct','cor','number',v.cor,n)}</div><p class="hint">Correct answers cannot be more than questions attempted.</p>
+  ${fsel('Status','status',STAT,v.status)}<label>Mistakes, distractions or delay notes<textarea id="f-notes" rows="3" maxlength="1000">${esc(v.notes)}</textarea></label>`,()=>{
+    const d={};['date','block','subject','topic','task','start','end','planned','actual','att','cor','status','notes'].forEach(k=>{d[k]=g(k)});
+    if(!validDate(d.date))return ferr('Choose a valid date.');
+    if(!d.topic&&!d.task)return ferr('Enter a chapter/topic or a planned task.');
+    if(!d.start!==!d.end)return ferr('Enter both start and end time, or leave both empty.');
+    if(d.start&&toMin(d.end)<=toMin(d.start))return ferr('End time must be after start time.');
+    for(const k of ['planned','actual','att','cor']){if(d[k]!==''&&!/^\d+$/.test(d[k]))return ferr('Minutes and question counts must be whole numbers, 0 or more.')}
+    d.planned=d.planned===''?(d.start?toMin(d.end)-toMin(d.start):0):+d.planned;
+    d.actual=+d.actual||0;d.att=+d.att||0;d.cor=+d.cor||0;
+    if(d.planned>1440||d.actual>1440)return ferr('Minutes cannot exceed 1440 (24 hours).');
+    if(d.cor>d.att)return ferr('Correct answers cannot exceed questions attempted.');
+    if(s)Object.assign(s,d);else S.sessions.push(Object.assign({id:uid()},d));
+    save();$('#dlg').close();render();toast('Session saved.');
+  });
+}
+function openBlock(id){
+  const b=id?S.blocks.find(x=>x.id===id):null,v=b||{title:'',start:'',end:'',study:true};
+  openDlg(`<h2>${b?'Edit':'Add'} timetable block</h2>${fld('Title','title','text',v.title,'maxlength="100" required')}<div class="two">${fld('Start','start','time',v.start,'required')}${fld('End','end','time',v.end,'required')}</div><label class="chk"><input type="checkbox" id="f-study" ${v.study?'checked':''}>Count as study block</label>`,()=>{
+    const d={title:g('title'),start:g('start'),end:g('end'),study:$('#f-study').checked};
+    if(!d.title)return ferr('Enter a title.');
+    if(!validTime(d.start)||!validTime(d.end))return ferr('Enter valid start and end times.');
+    if(toMin(d.end)<=toMin(d.start))return ferr('End time must be after start time.');
+    if(b)Object.assign(b,d);else S.blocks.push(Object.assign({id:uid()},d));
+    save();$('#dlg').close();render();toast('Block saved.');
+  });
+}
+
+/* ---------- data export / import ---------- */
+function dl(name,text,type){
+  const a=document.createElement('a'),u=URL.createObjectURL(new Blob([text],{type}));
+  a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1000);
+}
+const csvCell=v=>{let s=String(v==null?'':v);if(/^[=+\-@\t\r]/.test(s))s="'"+s;return '"'+s.replace(/"/g,'""')+'"'};
+function exportCsv(){
+  if(!S.sessions.length)return toast('No study sessions to export yet.','err');
+  const h=['Date','Block','Subject','Topic','Task','Start','End','Planned min','Actual min','Attempted','Correct','Status','Notes'];
+  const rows=[...S.sessions].sort(byTime).map(s=>[s.date,s.block,s.subject,s.topic,s.task,s.start,s.end,s.planned,s.actual,s.att,s.cor,s.status,s.notes].map(csvCell).join(','));
+  dl('jee-study-log-'+iso(new Date())+'.csv','\ufeff'+h.join(',')+'\r\n'+rows.join('\r\n'),'text/csv;charset=utf-8');
+  toast('CSV exported.');
+}
+function importJson(file){
+  if(!file)return;
+  if(file.size>5e6)return toast('Import failed: file is larger than 5 MB.','err');
+  const r=new FileReader();
+  r.onerror=()=>toast('Import failed: could not read the file.','err');
+  r.onload=()=>{
+    let o;try{o=JSON.parse(r.result)}catch(e){return toast('Import failed: the file is not valid JSON.','err')}
+    const c=clean(o);if(!c)return toast('Import failed: this is not a Study OS backup (missing sessions, blocks, chapters or reviews).','err');
+    if(confirm('Replace ALL current data with this backup ('+c.sessions.length+' sessions, '+c.chapters.length+' chapters)? This cannot be undone.')){S=c;save();render();toast('Backup imported.')}
+  };
+  r.readAsText(file);
+}
+
+/* ---------- events ---------- */
+const find=(l,id)=>S[l].find(x=>x.id===id);
+const ACT={
+  tab:id=>{tab=id;render();scrollTo(0,0)},
+  today:()=>{date=iso(new Date());render()},
+  new:()=>openSession(null),
+  edit:id=>find('sessions',id)&&openSession(id),
+  del:id=>{if(find('sessions',id)&&confirm('Delete this study session?')){S.sessions=S.sessions.filter(x=>x.id!==id);save();render();toast('Session deleted.')}},
+  tog:id=>{
+    const s=find('sessions',id);if(!s)return;
+    if(s.status==='Completed'){s.status='In Progress'}
+    else{
+      if(!s.actual){const v=(prompt('How many minutes did you actually stay focused? (whole number, e.g. 90)','')||'').trim();if(!/^\d+$/.test(v)||+v>1440)return toast('Enter whole minutes, for example 90. Session not completed.','err');s.actual=+v}
+      s.status='Completed';toast('Session completed. Nice work!');burst();
+    }
+    save();render();
+  },
+  guide:id=>{S.settings.hideGuide=id==='0';save();render()},
+  close:()=>$('#dlg').close(),
+  demo:demoOpen,
+  exam:()=>{S.settings.examDate='';save();render()},
+  democlose:()=>$('#demo').close(),
+  demoprev:()=>demoStep(dI-1),
+  demonext:()=>demoStep(dI<DEMO.length-1?dI+1:0),
+  demoplay:demoToggle,
+  clrf:()=>{flt={date:'',subject:'',status:''};render()},
+  newb:()=>openBlock(null),
+  editb:id=>find('blocks',id)&&openBlock(id),
+  delb:id=>{if(find('blocks',id)&&confirm('Delete this timetable block?')){S.blocks=S.blocks.filter(x=>x.id!==id);save();render();toast('Block deleted.')}},
+  plan:id=>{const b=find('blocks',id);if(b)openSession(null,{block:b.title,start:b.start,end:b.end,planned:toMin(b.end)-toMin(b.start)})},
+  wk:id=>{wk=id==='now'?wkStart(iso(new Date())):addDays(wk,7*Number(id));render()},
+  chs:id=>{chSub=id;render()},
+  delc:id=>{if(find('chapters',id)&&confirm('Delete this chapter and its progress?')){S.chapters=S.chapters.filter(x=>x.id!==id);save();render();toast('Chapter deleted.')}},
+  expj:()=>{dl('jee-study-os-backup-'+iso(new Date())+'.json',JSON.stringify(Object.assign({app:'jee2028-study-os',version:1},S),null,2),'application/json');S.settings.backedUp=true;save();render();toast('Backup exported.')},
+  expc:exportCsv,
+  reset:()=>{if(confirm('Delete ALL data and restore the default timetable? This cannot be undone.')&&confirm('Last check: have you exported a backup? Delete everything now?')){S=fresh();save();render();toast('All data deleted.')}}
+};
+const CH={
+  date:t=>{if(!validDate(t.value)){toast('Choose a valid date.','err');return render()}date=t.value;render()},
+  target:t=>{const n=Number(t.value);if(!(n>=0.5&&n<=24)){toast('Target must be between 0.5 and 24 hours.','err');return render()}S.settings.target=n;save();render()},
+  flt:t=>{flt[t.dataset.f]=t.value;render()},
+  rv:t=>{(S.reviews[wk]=S.reviews[wk]||{})[t.dataset.f]=t.value.slice(0,2000);save();toast('Reflection saved.')},
+  imp:t=>{importJson(t.files[0]);t.value=''},
+  exam:t=>{if(!validDate(t.value))return toast('Choose a valid date.','err');S.settings.examDate=t.value;save();render();toast('Exam date saved.')},
+  ch:t=>{
+    const c=find('chapters',t.dataset.id);if(!c)return;const f=t.dataset.f;let v=t.type==='checkbox'?t.checked:t.value.trim();
+    if(f==='lecture')v=num(v,0,100);else if(f==='solved')v=num(v,0,1e5);else if(f==='revDate'&&v&&!validDate(v)){toast('Choose a valid date.','err');return render()}else if(f==='weak')v=v.slice(0,300);
+    c[f]=v;save();render();
+  }
+};
+document.addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(b&&ACT[b.dataset.a])ACT[b.dataset.a](b.dataset.id,b)});
+document.addEventListener('change',e=>{const c=e.target.dataset.c;if(c&&CH[c])CH[c](e.target)});
+document.addEventListener('input',e=>{const t=e.target;if(t.type==='range'&&t.parentNode.querySelector('span'))t.parentNode.querySelector('span').textContent=t.value});
+document.addEventListener('submit',e=>{
+  e.preventDefault();
+  if(e.target.id==='dform'){if(SAVE)SAVE();return}
+  if(e.target.id==='chAdd'){
+    const n=$('#chName').value.trim();if(!n)return toast('Enter a chapter name.','err');
+    if(S.chapters.some(c=>c.subject===chSub&&c.name.toLowerCase()===n.toLowerCase()))return toast('That chapter already exists in '+chSub+'.','err');
+    S.chapters.push({id:uid(),subject:chSub,name:n,status:'Not Started',lecture:0,notes:false,dpp:'Not Started',solved:0,weak:'',revDate:''});
+    save();render();toast('Chapter added.');
+  }
+});
+
+load();
+render();
+</script>
+</body>
+</html>
