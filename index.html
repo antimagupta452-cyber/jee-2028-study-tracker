@@ -424,12 +424,30 @@ let pwData=null,pwT=0;
 function pwPaint(d){
   const b=$('#pwBody');if(!b)return;
   if(!d||!d.ok){
-    const m=d&&d.reason==='not_configured'?'Not connected yet. Add your tracker360.pw.live session cookie as the PW_TRACKER_SESSION secret to see your live schedule.':d&&d.reason==='session_expired'?'PW session expired. Sign in again on tracker360.pw.live and update the PW_TRACKER_SESSION secret.':'Could not reach PW Tracker 360. Tap Refresh to try again.';
-    b.innerHTML='<p class="empty">'+m+'</p>';return;
+    const m=d&&d.reason==='session_expired'?'Your PW session expired. Reconnect with your phone number.':'Connect your PW Tracker 360 account to see your live schedule here.';
+    b.innerHTML=`<p class="empty">${m}</p><div class="acts" style="justify-content:center"><button class="btn p s" data-a="pwconnect">Connect PW Tracker 360</button></div>`;return;
   }
   const days=d.days||[];
   if(!days.length){b.innerHTML='<p class="empty">No scheduled classes right now.</p>';return}
   b.innerHTML=days.map(x=>`<div class="mt"><small>${esc(x.date||'Planner')}${typeof x.done==='number'?' · '+x.done+' of '+(x.total!=null?x.total:x.lectures.length)+' done':''}</small>${x.lectures.map(l=>`<div class="row"><div class="grow"><b>${esc(l.title)}</b><small>${esc([l.subject,l.chapter,l.duration].filter(Boolean).join(' · '))}</small></div><span class="tag ${l.done?'ok':''}">${l.done?'Done':'Pending'}</span></div>`).join('')}</div>`).join('');
+}
+function pwPhoneDlg(){
+  openDlg(`<h2>Connect PW Tracker 360</h2><p class="hint">Enter the same mobile number as your pw.live account. You will get a one-time code by SMS.</p>${fld('Mobile number','phone','tel','','maxlength="13" inputmode="numeric" required')}`,async()=>{
+    const ph=g('phone');ferr('');
+    const r=await fetch('/api/pw-login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'send',phone:ph})});
+    const j=await r.json().catch(()=>null);
+    if(!j||!j.ok)return ferr((j&&j.error)||'Could not send the OTP.');
+    $('#dlg').close();pwOtpDlg(ph);toast('OTP sent to '+ph+'.');
+  });
+}
+function pwOtpDlg(ph){
+  openDlg(`<h2>Enter the OTP</h2><p class="hint">Sent by SMS to ${esc(ph)}. Check your messages.</p>${fld('6-digit code','otp','text','','maxlength="8" inputmode="numeric" required')}`,async()=>{
+    const otp=g('otp');ferr('');
+    const r=await fetch('/api/pw-login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'verify',phone:ph,otp})});
+    const j=await r.json().catch(()=>null);
+    if(!j||!j.ok)return ferr((j&&j.error)||'That code did not work.');
+    $('#dlg').close();pwT=0;pwLoad(true);toast('PW Tracker 360 connected.');
+  });
 }
 async function pwLoad(force){
   const b=$('#pwBody');if(!b)return;
@@ -546,6 +564,7 @@ const ACT={
   chs:id=>{chSub=id;render()},
   delc:id=>{if(find('chapters',id)&&confirm('Delete this chapter and its progress?')){S.chapters=S.chapters.filter(x=>x.id!==id);save();render();toast('Chapter deleted.')}},
   pwrefresh:()=>pwLoad(true),
+  pwconnect:()=>pwPhoneDlg(),
   expj:()=>{dl('jee-study-os-backup-'+iso(new Date())+'.json',JSON.stringify(Object.assign({app:'jee2028-study-os',version:1},S),null,2),'application/json');S.settings.backedUp=true;save();render();toast('Backup exported.')},
   expc:exportCsv,
   reset:()=>{if(confirm('Delete ALL data and restore the default timetable? This cannot be undone.')&&confirm('Last check: have you exported a backup? Delete everything now?')){S=fresh();save();render();toast('All data deleted.')}}
@@ -568,7 +587,7 @@ document.addEventListener('change',e=>{const c=e.target.dataset.c;if(c&&CH[c])CH
 document.addEventListener('input',e=>{const t=e.target;if(t.type==='range'&&t.parentNode.querySelector('span'))t.parentNode.querySelector('span').textContent=t.value});
 document.addEventListener('submit',e=>{
   e.preventDefault();
-  if(e.target.id==='dform'){if(SAVE)SAVE();return}
+  if(e.target.id==='dform'){if(SAVE)Promise.resolve(SAVE()).catch(()=>ferr('Something went wrong. Try again.'));return}
   if(e.target.id==='chAdd'){
     const n=$('#chName').value.trim();if(!n)return toast('Enter a chapter name.','err');
     if(S.chapters.some(c=>c.subject===chSub&&c.name.toLowerCase()===n.toLowerCase()))return toast('That chapter already exists in '+chSub+'.','err');
